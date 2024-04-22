@@ -19,6 +19,11 @@ export interface Assignment {
   weight: number;
 }
 
+export interface AssignmentWithWeight {
+  assignmentId: string;
+  weight: number;
+}
+
 export interface StudentProfile {
   studentId: string;
   studentName: string;
