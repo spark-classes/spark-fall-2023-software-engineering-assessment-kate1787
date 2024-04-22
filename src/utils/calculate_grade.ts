@@ -1,4 +1,5 @@
 // src/utils/calculate_grade.ts
+import { Enrollment } from "../types/api_types"; // Adjust this path as necessary
 import { IUniversityClass, Assignment, StudentProfile } from "../types/api_types";
 
 interface IStudentAssignment {
@@ -10,6 +11,31 @@ interface IStudentGrade {
     studentId: string;
     finalGrade: number;
 }
+
+
+
+
+export const calculateFinalGrade = (
+  studentId: string,
+  assignmentsWeights: Record<string, number>,
+  enrollments: Enrollment[]
+): string => {
+  const totalWeightedGrades = enrollments.reduce((acc, { courseId, finalGrade }) => {
+    const weight = assignmentsWeights[courseId];
+    // Ensure finalGrade is a number before attempting to multiply
+    const numericGrade = typeof finalGrade === 'string' ? parseFloat(finalGrade) : finalGrade;
+    return weight && numericGrade ? acc + (numericGrade * weight) : acc;
+  }, 0);
+
+  const totalWeight = enrollments.reduce((acc, { courseId }) => {
+    const weight = assignmentsWeights[courseId];
+    return weight ? acc + weight : acc;
+  }, 0);
+
+  return totalWeight ? (totalWeightedGrades / totalWeight).toFixed(1) : 'N/A';
+};
+
+
 
 // Mock function to fetch class data, ensuring all fields are properly populated.
 async function fetchClassData(classId: string): Promise<IUniversityClass> {
