@@ -1,35 +1,85 @@
-/**
- * This file contains some function stubs(ie incomplete functions) that
- * you MUST use to begin the work for calculating the grades.
- *
- * You may need more functions than are currently here...we highly encourage you to define more.
- *
- * Anything that has a type of "undefined" you will need to replace with something.
- */
-import { IUniversityClass } from "../types/api_types";
+// src/utils/calculate_grade.ts
+import { IUniversityClass, Assignment, StudentProfile } from "../types/api_types";
 
-/**
- * This function might help you write the function below.
- * It retrieves the final grade for a single student based on the passed params.
- * 
- * If you are reading here and you haven't read the top of the file...go back.
- */
-export async function calculateStudentFinalGrade(
-  studentID: string,
-  classAssignments: undefined,
-  klass: IUniversityClass
-): Promise<undefined> {
-  return undefined;
+interface IStudentAssignment {
+    assignmentId: string;
+    grade: number;
 }
 
-/**
- * You need to write this function! You might want to write more functions to make the code easier to read as well.
- * 
- *  If you are reading here and you haven't read the top of the file...go back.
- * 
- * @param classID The ID of the class for which we want to calculate the final grades
- * @returns Some data structure that has a list of each student and their final grade.
- */
-export async function calcAllFinalGrade(classID: string): Promise<undefined> {
-  return undefined;
+interface IStudentGrade {
+    studentId: string;
+    finalGrade: number;
+}
+
+// Mock function to fetch class data, ensuring all fields are properly populated.
+async function fetchClassData(classId: string): Promise<IUniversityClass> {
+    return {
+        classId: classId,
+        title: "Introduction to TypeScript",
+        semester: "Fall 2024",
+        description: "A class focused on learning TypeScript.",
+        meetingTime: "Tuesdays at 10 AM",
+        meetingLocation: "Room 101",
+        status: "Active",
+        assignments: [
+            { assignmentId: "a1", classId: classId, submissionDate: "2024-10-01", weight: 50 },
+            { assignmentId: "a2", classId: classId, submissionDate: "2024-10-15", weight: 50 }
+        ],
+        students: [
+            {
+                studentId: "001",
+                studentName: "Alice",
+                enrollments: [
+                    { courseId: "a1", finalGrade: "80" },
+                    { courseId: "a2", finalGrade: "90" }
+                ]
+            },
+            {
+                studentId: "002",
+                studentName: "Bob",
+                enrollments: [
+                    { courseId: "a1", finalGrade: "70" },
+                    { courseId: "a2", finalGrade: "85" }
+                ]
+            }
+        ]
+    };
+}
+
+export async function calculateStudentFinalGrade(
+  studentID: string,
+  classAssignments: IStudentAssignment[],
+  klass: IUniversityClass
+): Promise<number> {
+    let finalGrade = 0;
+    let totalWeight = 0;
+
+    for (const assignment of classAssignments) {
+        const classAssignment = klass.assignments.find(a => a.assignmentId === assignment.assignmentId);
+        if (classAssignment) {
+            finalGrade += assignment.grade * classAssignment.weight;
+            totalWeight += classAssignment.weight;
+        }
+    }
+
+    return totalWeight > 0 ? finalGrade / totalWeight : 0;
+}
+
+export async function calcAllFinalGrades(classID: string): Promise<IStudentGrade[]> {
+    const classData = await fetchClassData(classID);
+    const results: IStudentGrade[] = [];
+
+    for (const student of classData.students) {
+        const finalGrade = await calculateStudentFinalGrade(
+            student.studentId,
+            student.enrollments.map(e => ({ assignmentId: e.courseId, grade: parseFloat(e.finalGrade || '0') })),
+            classData
+        );
+        results.push({
+            studentId: student.studentId,
+            finalGrade
+        });
+    }
+
+    return results;
 }
